@@ -1,0 +1,60 @@
+zookeeper:
+  image: zookeeper:3.4.9
+  net: "host"
+  restart: always
+
+mesosmaster:
+  image: mesosphere/mesos-master:1.1.0-2.0.107.ubuntu1404
+  net: "host"
+  environment:
+    - MESOS_CLUSTER=$PROJECT_NAME
+    - MESOS_HOSTNAME=$DEPLOY_HOST_PUBLIC_IP
+    - MESOS_ADVERTISE_IP=$DEPLOY_MESOS_MASTER_IP
+    - MESOS_ADVERTISE_PORT=$DEPLOY_MESOS_MASTER_PORT
+    - MESOS_PORT=$DEPLOY_MESOS_MASTER_PORT
+    - MESOS_IP=$DEPLOY_MESOS_MASTER_IP
+    - MESOS_QUORUM=1
+    - MESOS_REGISTRY=replicated_log
+    - MESOS_LOG_DIR=/var/log/mesos
+    - MESOS_WORK_DIR=/tmp/mesos_master
+  restart: always
+
+mesosslave:
+  image: mesosphere/mesos-slave:1.1.0-2.0.107.ubuntu1404
+  net: "host"
+  pid: "host"
+  privileged: true
+  environment:
+    - MESOS_MASTER=$DEPLOY_MESOS_MASTER_IP:$DEPLOY_MESOS_MASTER_PORT
+    - MESOS_HOSTNAME=$DEPLOY_HOST_PUBLIC_IP
+    - MESOS_PORT=$DEPLOY_MESOS_SLAVE_PORT
+    - MESOS_IP=$DEPLOY_MESOS_SLAVE_IP
+    - MESOS_LOG_DIR=/var/log/mesos
+    - MESOS_LOGGING_LEVEL=INFO
+    - MESOS_CONTAINERIZERS=docker,mesos
+    - MESOS_DOCKER_SOCKET=/var/run/docker.sock
+    - MESOS_EXECUTOR_REGISTRATION_TIMEOUT=15mins
+    - MESOS_RECOVERY_TIMEOUT=15mins
+    - MESOS_DOCKER_KILL_ORPHANS=true
+    - MESOS_WORK_DIR=/data/mesos_slave
+    - MESOS_STRICT=false
+    - MESOS_resources=ports(*):[6000-8800,31000-52000]
+  volumes:
+    - /usr/bin/docker:/usr/bin/docker
+    - /var/run/docker.sock:/var/run/docker.sock
+    - /cgroup:/cgroup
+    - /data/mesos_slave:/data/mesos_slave
+  restart: always
+
+marathon:
+  image: mesosphere/marathon:v1.3.6
+  net: "host"
+  environment:
+    - MARATHON_MASTER=$DEPLOY_MESOS_MASTER_IP:$DEPLOY_MESOS_MASTER_PORT
+    - MARATHON_ZK=zk://$DEPLOY_MESOS_MASTER_IP:2181/marathon
+    - MARATHON_HOSTNAME=$DEPLOY_HOST_PUBLIC_IP
+    - MARATHON_HTTP_PORT=$DEPLOY_MARATHON_PORT
+    - MARATHON_TASK_LAUNCH_TIMEOUT=300000 # In milliseconds, >= MESOS_EXECUTOR_REGISTRATION_TIMEOUT of Mesos Slave
+    - LIBPROCESS_IP=$DEPLOY_MESOS_MASTER_IP
+  restart: always
+

@@ -1,0 +1,13 @@
+export PROJECT_NAME=test
+#mesos master ip (private IP)
+export DEPLOY_MESOS_MASTER_IP=10.9.68.199
+#mesos slave ip (private IP)
+export DEPLOY_MESOS_SLAVE_IP=10.9.68.199
+#Host Public IP (public IP)
+export DEPLOY_HOST_PUBLIC_IP=120.132.63.57
+#mesos master listen port
+export DEPLOY_MESOS_MASTER_PORT=5050
+#mesos slave listen port
+export DEPLOY_MESOS_SLAVE_PORT=5051
+#mesos marathon listen port
+export DEPLOY_MARATHON_PORT=8080
